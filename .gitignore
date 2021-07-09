@@ -1,0 +1,13 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+tidy_heatmap.Rproj
+README_cache/*
+vignettes/introduction_cache*
+*.Rproj
+Meta
+doc
+dev
+tidy_heatmap.Rcheck*
+
