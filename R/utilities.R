@@ -1,19 +1,19 @@
 
-filter_lowly_abundant = function(.data, .level, .value, .estimate, theshold){
+filter_lowly_abundant = function(.data, .level, y, value, theshold){
   
-  .value = enquo(.value)
-  .estimate= enquo(.estimate)
+  y = enquo(y)
+  value= enquo(value)
   
-  .data %>% filter(level == .level) %>% filter(`median_proportion`>theshold | !is.na(Estimate))
+  .data %>% filter(level == .level) %>% filter(!!y>theshold | !is.na(!!value))
   
 }
 
-prop_passes_threshold = function(.data, .level, .value, .estimate, theshold){
+prop_passes_threshold = function(.data, .level, y, value, theshold){
   
-  .value = enquo(.value)
-  .estimate= enquo(.estimate)
+  y = enquo(y)
+  value= enquo(value)
   
-  .data %>% filter_lowly_abundant(.level, !!.value, !!.estimate, theshold) %>% nrow() > 0
+  .data %>% filter_lowly_abundant(.level, !!y, !!value, theshold) %>% nrow() > 0
   
 }
 
