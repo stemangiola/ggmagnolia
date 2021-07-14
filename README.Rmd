@@ -12,11 +12,11 @@ knitr::opts_chunk$set( fig.path = "man/figures/")
 <!-- badges: end -->
 
 ## Citation
-Mangiola et al., (2020). ggmagnolia: an R package for modular heatmap production based on tidy principles. Journal of Open Source Software, 5(52), 2472, https://doi.org/10.21105/joss.02472
+[to come]
 
 Please have a look also to 
 
-- [nanny](https://github.com/stemangiola/nanny/) for tidy high-level data analysis and manipulation 
+- [tidyHeatmap](https://github.com/stemangiola/tidyHeatmap/) for tidy high-level data analysis and manipulation 
 - [tidygate](https://github.com/stemangiola/tidygate/) for adding custom gate information to your tibble 
 - [tidySingleCellExperiment](https://stemangiola.github.io/tidySingleCellExperiment/) for tidy manipulation of Seurat objects
 - [tidyseurat](https://stemangiola.github.io/tidyseurat/) for tidy manipulation of Seurat objects
@@ -28,13 +28,6 @@ website: [stemangiola.github.io/ggmagnolia](https://stemangiola.github.io/ggmagn
 `ggmagnolia` is a package that introduces tidy principles to the creation of information-rich heatmaps. 
 This package uses [ComplexHeatmap](https://bioconductor.org/packages/release/bioc/html/ComplexHeatmap.html) as graphical engine.
 
-**Advantages:**
-
-  - Modular annotation with just specifying column names
-  - Custom grouping of rows is easy to specify providing a grouped tbl.
-    For example `df %>% group_by(...)`
-  - Labels size adjusted by row and column total number
-  - Default use of Brewer and Viridis palettes
 
 ## Functions/utilities available
 
@@ -42,15 +35,7 @@ Function | Description
 ------------ | -------------
 `heatmap` | Plot base heatmap
 `add_tile` | Add tile annotation to the heatmap
-`add_point` | Add point annotation to the heatmap
-`add_bar` | Add bar annotation to the heatmap
-`add_line` | Add line annotation to the heatmap
-`layer_point` | Add layer of symbols on top of the heatmap
-`layer_square` | Add layer of symbols on top of the heatmap
-`layer_diamond` | Add layer of symbols on top of the heatmap
-`layer_arrow_up` | Add layer of symbols on top of the heatmap
-`layer_arrow_down` | Add layer of symbols on top of the heatmap
-`save_pdf` | Save the PDF of the heatmap
+
 
 ## Installation
 
@@ -90,188 +75,11 @@ Let's transform the mtcars dataset into a tidy "element-feature-independent vari
 library(dplyr)
 library(tidyr)
 library(ggmagnolia)
+data("magnolia_input")
 ```
 
 ```{r}
-mtcars_tidy <- 
-	mtcars %>% 
-	as_tibble(rownames="Car name") %>% 
-	
-	# Scale
-	mutate_at(vars(-`Car name`, -hp, -vs), scale) %>%
-	
-	# tidyfy
-	pivot_longer(cols = -c(`Car name`, hp, vs), names_to = "Property", values_to = "Value")
-
-mtcars_tidy
+ magnolia_input |> 
+		plot_polar()
 ```
 
-
-## Plot
-
-For plotting, you simply pipe the input data frame into heatmap, specifying:
-
-- The rows, cols relative column names (mandatory)
-- The value column name (mandatory)
-- The annotations column name(s)
-
-mtcars
-```{r}
-mtcars_heatmap <- 
-	mtcars_tidy %>% 
-		heatmap(`Car name`, Property, Value	) %>%
-		add_tile(hp)
-
-mtcars_heatmap
-```
-
-## Save
-
-```{r eval=F}
-mtcars_heatmap %>% save_pdf("mtcars_heatmap.pdf")
-```
-
-## Grouping
-
-We can easily group the data (one group per dimension maximum, at the moment only the vertical dimension is supported) with dplyr, and the heatmap will be grouped accordingly
-
-```{r}
-mtcars_tidy %>% 
-	group_by(vs) %>%
-	heatmap(`Car name`, Property, Value	) %>%
-	add_tile(hp)
-```
-
-```{r}
-mtcars_tidy %>% 
-	group_by(vs) %>%
-	heatmap(
-		`Car name`, Property, Value	,
-		palette_grouping = list(c("#66C2A5", "#FC8D62"))
-	) %>%
-	add_tile(hp)
-
-
-
-```
-
-## Custom palettes
-
-We can easily use custom palette, using strings, hexadecimal color character vector, 
-
-```{r}
-mtcars_tidy %>% 
-	heatmap(
-		`Car name`, 
-		Property, 
-		Value,
-		palette_value = c("red", "white", "blue")
-	)
-```
-
-Or a grid::colorRamp2 function for higher flexibility
-
-```{r}
-mtcars_tidy %>% 
-	heatmap(
-		`Car name`, 
-		Property, 
-		Value,
-		palette_value = circlize::colorRamp2(c(-2, -1, 0, 1, 2), viridis::magma(5))
-	)
-```
-
-## Multiple groupings and annotations
-
-```{r}
-ggmagnolia::pasilla %>%
-	group_by(location, type) %>%
-	heatmap(
-			.column = sample,
-			.row = symbol,
-			.value = `count normalised adjusted`
-		) %>%
-	add_tile(condition) %>%
-	add_tile(activation)
-```
-
-## Annotation types
-
-**This feature requires >= 0.99.20 version**
-
-"tile" (default), "point", "bar" and "line" are available
-
-```{r}
-# Create some more data points
-pasilla_plus <- 
-	ggmagnolia::pasilla %>%
-		dplyr::mutate(act = activation) %>% 
-		tidyr::nest(data = -sample) %>%
-		dplyr::mutate(size = rnorm(n(), 4,0.5)) %>%
-		dplyr::mutate(age = runif(n(), 50, 200)) %>%
-		tidyr::unnest(data) 
-
-# Plot
-pasilla_plus %>%
-		heatmap(
-			.column = sample,
-			.row = symbol,
-			.value = `count normalised adjusted`
-		) %>%
-	add_tile(condition) %>%
-	add_point(activation) %>%
-	add_tile(act) %>%
-	add_bar(size) %>%
-	add_line(age)
-```
-
-# Layer symbol
-
-Add a layer on top of the heatmap
-
-```{r}
-ggmagnolia::pasilla %>%
-	
-	# filter
-	filter(symbol %in% head(unique(ggmagnolia::pasilla$symbol), n = 10)) %>%
-	
-	heatmap(
-			.column = sample,
-			.row = symbol,
-			.value = `count normalised adjusted`
-		) %>% 
-	layer_point(
-		`count normalised adjusted log` > 6 & sample == "untreated3" 
-	)
-```
-
-# Split cladogram
-
-```{r}
-mtcars_tidy %>% 
-	heatmap(`Car name`, Property, Value	) %>%
-	split_rows(2) %>%
-	split_columns(2)
-```
-
-# ComplexHeatmap further styling
-
-Add cell borders
-
-```{r}
-	mtcars_tidy %>% 
-		heatmap(
-			`Car name`, Property, Value, 
-			rect_gp = grid::gpar(col = "#161616", lwd = 0.5)
-		) 
-```
-
-Drop row clustering
-
-```{r}
-	mtcars_tidy %>% 
-		heatmap(
-			`Car name`, Property, Value, 
-			cluster_rows = FALSE
-		) 
-```
